@@ -4,36 +4,55 @@ import { toast } from 'react-toastify';
 const axios = require('axios');
 
 export const loginSuccess = (headers) => {
-        return {
-          type: types.LOGIN_SUCCESS,
-          payload: headers.authorization
-        };
+    return {
+        type: types.LOGIN_SUCCESS,
+        payload: headers.authorization
+    };
 }
 
 export const getImageSuccess = (images) => {
     return {
-      type: types.GET_IMAGES_SUCCESS,
-      payload: images
+        type: types.GET_IMAGES_SUCCESS,
+        payload: images
     };
 }
 
 export const updateImageSuccess = (image) => {
     return {
-      type: types.GET_IMAGES_SUCCESS,
-      payload: image
+        type: types.GET_IMAGES_SUCCESS,
+        payload: image
     };
 }
 
-export const addImageSuccess = (image) => {
+export const setSearchValue = (searchValue) => {
     return {
-        type: types.GET_IMAGES_SUCCESS,
-        payload: image
-      };  
+        type: types.SET_SEARCH_VALUE,
+        payload: searchValue
+    };
 }
 
-export const getImages = ({title, description, public_view, tags}) => {
+export const setSearchBy = (searchBy) => {
+    return {
+        type: types.SET_SEARCH_BY,
+        payload: searchBy
+    };
+}
+
+export const toggleCreateModal = (showModal) => {
+    return {
+        type: types.TOGGLE_CREATE_MODAL,
+        payload: showModal
+    };
+}
+
+
+export const getImages = () => {
     return dispatch => {
-        axios.get(`https://jsonplaceholder.typicode.com/Images`)
+        axios.get(`https://shopify-images-backend.herokuapp.com/api/images`, {
+            headers: {
+                Authorization: localStorage.getItem('token')
+            }
+        })
             .then(res => {
                 dispatch(getImageSuccess(res.data))
             })
@@ -43,17 +62,15 @@ export const getImages = ({title, description, public_view, tags}) => {
     };
 };
 
-export const createImage = ({title, description, public_view, img_file}) => {
+export const getPersonal = () => {
     return dispatch => {
-        axios
-            .post(`https://jsonplaceholder.typicode.com/Images`, {
-                title,
-                description,
-                public_view,
-                img_file
-            })
+        axios.get(`https://shopify-images-backend.herokuapp.com/api/personal`, {
+            headers: {
+                Authorization: localStorage.getItem('token')
+            }
+        })
             .then(res => {
-                dispatch(addImageSuccess(res.data))
+                dispatch(getImageSuccess(res.data))
             })
             .catch(err => {
                 toast.error(err)
@@ -61,15 +78,46 @@ export const createImage = ({title, description, public_view, img_file}) => {
     };
 };
 
-export const updateImage = ({title, description, public_view, tags}) => {
+
+export const createImage = ({ title, description, public_view, img_file }) => {
+    const formData = new FormData();
+    formData.append('title', title)
+    formData.append('description', description)
+    formData.append('public_view', public_view)
+    formData.append('img_file', img_file)
+    console.log(formData)
+
     return dispatch => {
         axios
-            .post(`https://jsonplaceholder.typicode.com/Images`, {
+            .post(`https://shopify-images-backend.herokuapp.com/api/images`, formData, {
+                headers: {
+                    Authorization: localStorage.getItem('token'),
+                    "Content-Type": "multipart/form-data"
+                }
+            })
+            .then(res => {
+                dispatch(getImages());
+            })
+            .catch(err => {
+                toast.error('There was an error uploading your image')
+            });
+    };
+};
+
+export const updateImage = ({ title, description, public_view, tags, id }) => {
+    return dispatch => {
+        axios
+            .put(`https://shopify-images-backend.herokuapp.com/images/${id}`, {
                 title,
                 description,
                 public_view,
                 tags
-            })
+            },
+                {
+                    headers: {
+                        Authorization: localStorage.getItem('token')
+                    }
+                })
             .then(res => {
                 dispatch(updateImageSuccess(res.data))
             })
@@ -90,6 +138,7 @@ export const login = ({ email, password }) => {
             })
             .then(res => {
                 dispatch(loginSuccess(res.headers))
+                dispatch(getImages());
             })
             .catch(err => {
                 toast.error("There was a problem logging in, check your username and password")
@@ -97,10 +146,30 @@ export const login = ({ email, password }) => {
     }
 }
 
+export const search = (search_by, search_value) => {
+    return dispatch => {
+        axios
+            .post(`https://shopify-images-backend.herokuapp.com/api/images/search`, {
+                search_by,
+                search_value
+            }, {
+                headers: {
+                    Authorization: localStorage.getItem('token')
+                }
+            })
+            .then(res => {
+                dispatch(getImageSuccess(res.data))
+            })
+            .catch(err => {
+                toast.error("There was a fetching images")
+            })
+    }
+}
+
 export const register = ({ email, password, name }) => {
     return dispatch => {
         axios
-            .post(`http://127.0.0.1:3001/signup`, {
+            .post(`https://shopify-images-backend.herokuapp.com/signup`, {
                 user: {
                     email,
                     password,

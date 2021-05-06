@@ -16,7 +16,7 @@ export const PrivateRoute = ({ component: Component, ...rest }) => (
 
 export const renderRedirect = (user) => {
   console.log(user)
-  if (user.id != '') {
+  if (localStorage.getItem('token')) {
     return (<Redirect to='/' />)
   }
 }
